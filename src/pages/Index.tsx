@@ -1,14 +1,34 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import TodoList from "../components/TodoList";
 import TodoInput from "../components/TodoInput";
 import TodoFilters from "../components/TodoFilters";
 import { Task } from "../types/todo";
 
+const STORAGE_KEY = "todo-tasks";
+
 const Index = () => {
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const [tasks, setTasks] = useState<Task[]>(() => {
+    const savedTasks = localStorage.getItem(STORAGE_KEY);
+    if (savedTasks) {
+      // Parse stored tasks and convert date strings back to Date objects
+      return JSON.parse(savedTasks, (key, value) => {
+        if (key === "dueDate" || key === "createdAt") {
+          return value ? new Date(value) : undefined;
+        }
+        return value;
+      });
+    }
+    return [];
+  });
+
   const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
   const [search, setSearch] = useState("");
+
+  // Save tasks to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+  }, [tasks]);
 
   const addTask = (task: Task) => {
     setTasks((prev) => [task, ...prev]);
